@@ -41,3 +41,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        github_token: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动生成的令牌，无需手动配置
+        publish_dir: ./dist  # 要部署的目录（核心：指向你的构建产物目录）
