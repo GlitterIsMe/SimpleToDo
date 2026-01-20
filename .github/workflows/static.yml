@@ -1,45 +1,59 @@
-# Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # 推送到 main 分支时触发
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
+  # 允许手动触发
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# 配置权限（保持不变）
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# 并发控制（保持不变）
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      # 新增：安装 Node.js 环境（构建前端项目必需）
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'  # 适配你的项目 Node 版本
+          cache: 'npm'        # 缓存依赖加速构建
+
+      # 新增：安装项目依赖
+      - name: Install dependencies
+        run: npm install  # 用 yarn/pnpm 则改为 yarn install / pnpm install
+
+      # 新增：构建项目生成 dist 目录
+      - name: Build project
+        run: npm run build  # 你的构建命令（如 yarn build / vite build）
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      # 关键修正：指定要部署的目录为 dist（而不是上传整个仓库）
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          # 核心修改：只上传 dist 目录（你的构建产物），而非整个仓库
+          path: './dist'
+
+      # 修正：删除多余的 github_token 和 publish_dir 参数
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        github_token: ${{ secrets.GITHUB_TOKEN }}  # GitHub 自动生成的令牌，无需手动配置
-        publish_dir: ./dist  # 要部署的目录（核心：指向你的构建产物目录）
